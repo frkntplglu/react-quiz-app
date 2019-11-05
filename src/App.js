@@ -1,26 +1,67 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { Component } from 'react';
+import './assets/style.css';
+import quizService from './quizService/';
+import QuestionList from './components/QuestionList';
+import Result from './components/Result';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+export default class App extends Component {
+  state = {
+    questionBank : [],
+    score : 0,
+    responses : 0
+  }
+
+  constructor(){
+    super()
+    this.playAgain = this.playAgain.bind(this)
+  }
+
+  getQuestionsFromServer(){
+    quizService().then(question =>{
+      this.setState({
+        questionBank : question
+      })
+    })
+  }
+
+  computeAnswer(answer,correct){
+    this.setState({
+      responses : this.state.responses + 1
+    })
+    if(answer === correct){
+      this.setState({
+        score : this.state.score + 1
+      })
+    }
+  }
+
+  playAgain(){
+    this.getQuestionsFromServer();
+    this.setState({
+      responses : 0,
+      score : 0
+    })
+  }
+
+  componentDidMount(){
+    this.getQuestionsFromServer();
+  }
+
+  render() {
+    return (
+      <div className="container">
+        <div className="title">Quiz Game</div>
+        {
+          this.state.responses < 5 ? this.state.questionBank.map((index) => {
+            return (
+              <QuestionList key={index.questionId} question={index.question} selected={answer => this.computeAnswer(answer,index.correct)} options={index.answers} />
+            )
+          }) : null
+        }
+        {
+          this.state.responses === 5 ? <Result score={this.state.score} playAgain={this.playAgain} /> : null
+        }
+      </div>
+    )
+  }
 }
-
-export default App;
